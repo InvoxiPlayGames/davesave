@@ -1,7 +1,20 @@
-usage: davesave [decrypt/encrypt] [platform] [input] [output]
-where platform is ps4, ps3, 360, xb1 or pc
+davesave is a save file information viewer, decryptor and encryptor for
+Harmonix's "Forge" engine games (RB4, Amp2016, FME, RBVR, DCS)
 
-does not parse RevisionStream header yet - skip the first 5 bytes on the save file
-before decrypting and add 5 bytes after encrypting (7A 00 00 00 00)
+available commands: info, decrypt, encrypt
+supported games: Amplitude 2016 (1.0/1.1), Rock Band 4 (2.3.7)
 
-uses code from LibForge (RIP maxton): https://github.com/mtolly/LibForge
+- davesave info [filename]
+    will display savegame info from the file provided
+
+- davesave decrypt [input file] [output file] (optional: ps3/360/ps4/xb1/pc)
+    will decrypt the encrypted save from the input file into the output
+    platform must be provided if working with an unsupported game
+
+- davesave encrypt [input file] [output file] (optional: ps3/360/ps4/xb1/pc)
+    will encrypt a decrypted save from the input file into the output
+    platform must be provided if working with an unsupported game
+
+uses code from LibForge: https://github.com/mtolly/LibForge
+uses DtxCS: https://github.com/InvoxiPlayGames/DtxCS
+thank you for everything, maxton

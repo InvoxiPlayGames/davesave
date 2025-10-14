@@ -1,7 +1,11 @@
 ﻿/*
- * EncryptedReadStream.cs
+ * EncryptedWriteRevisionStream.cs
  * 
  * Copyright (c) 2015,2016,2017 maxton. All rights reserved.
+ * Copyright (c) 2025 Emma / InvoxiPlayGames
+ * 
+ * 14-Oct-2025(Emma): Adapted the EncryptedWriteStream class to be
+ * more well-equipped for writing encrypted RevisionStreams.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,11 +23,10 @@
  */
 using System;
 using System.IO;
-using LibForge.Extensions;
 
 namespace LibForge.Util
 {
-    class EncryptedReadStream : Stream
+    public class EncryptedWriteRevisionStream : Stream
     {
         private long position;
         private int key;
@@ -32,31 +35,36 @@ namespace LibForge.Util
         private Stream file;
         public byte xor;
 
-        internal EncryptedReadStream(Stream file, byte xor = 0, bool ps3 = false)
+
+        internal EncryptedWriteRevisionStream(Stream file, int key, bool ps3 = false)
         {
             file.Position = 0;
-            // The initial key is found in the first 4 bytes.
-            int keyNum;
+            // write the RevisionStream header
+            file.WriteUInt8(0x7A);
+            file.WriteUInt32LE(0); // 0 = 0 regardless of endianness
             if (ps3)
             {
-                keyNum = file.ReadInt32BE();
+                file.WriteUInt32BE((uint)key);
             } else
             {
-                keyNum = file.ReadInt32LE();
+                file.WriteInt32LE(key);
             }
-            this.key = cryptRound(keyNum);
-            this.position = 0;
-            this.keypos = 0;
+            position = 0;
+            keypos = 0;
+            // The initial key is found in the first 4 bytes.
+            this.key = cryptRound(key);
             this.curKey = this.key;
             this.file = file;
-            this.Length = file.Length - 4;
-            this.xor = xor;
+            if (key < 0)
+                this.xor = 0xFF;
+            else
+                this.xor = 0x00;
         }
 
-        public override bool CanRead => position < Length && position >= 0;
+        public override bool CanRead => false;
         public override bool CanSeek => true;
-        public override bool CanWrite => false;
-        public override long Length { get; }
+        public override bool CanWrite => file.CanWrite;
+        public override long Length => file.Length - (4 + 5);
 
         public override long Position
         {
@@ -97,35 +105,20 @@ namespace LibForge.Util
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            // ensure file is at correct offset
-            file.Seek(this.position + 4, SeekOrigin.Begin);
-            if (offset + count > buffer.Length)
-            {
-                throw new IndexOutOfRangeException("Attempt to fill buffer past its end");
-            }
-            if (this.Position == this.Length || this.Position + count > this.Length)
-            {
-                count = (int)(this.Length - this.Position);
-                //throw new System.IO.EndOfStreamException("Cannot read past end of file.");
-            }
-
-            int bytesRead = file.Read(buffer, offset, count);
-
-            for (uint i = 0; i < bytesRead; i++)
-            {
-                buffer[offset + i] ^= (byte)(this.curKey ^ xor);
-                this.position++;
-                updateKey();
-            }
-            return bytesRead;
+            throw new NotImplementedException();
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            int adjust = origin == SeekOrigin.Current ? 0 : 4;
-            this.position = file.Seek(offset + adjust, origin) - 4;
+            int adjust = origin == SeekOrigin.Current ? 0 : (4 + 5);
+            this.position = file.Seek(offset + adjust, origin) - (4 + 5);
             updateKey();
             return position;
+        }
+
+        public void FinishWriting()
+        {
+            file.WriteUInt8(0x7B);
         }
 
         #region Not Used
@@ -142,7 +135,22 @@ namespace LibForge.Util
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotSupportedException();
+            if (offset + count > buffer.Length)
+            {
+                throw new IndexOutOfRangeException("Attempt to read buffer past its end");
+            }
+            updateKey();
+            var copy = new byte[count];
+            Buffer.BlockCopy(buffer, offset, copy, 0, count);
+            for (uint i = 0; i < count; i++)
+            {
+                copy[i] ^= (byte)(this.curKey ^ xor);
+                position++;
+                updateKey();
+            }
+            // ensure file is at correct offset
+            file.Seek(this.position + (4 + 5) - count, SeekOrigin.Begin);
+            file.Write(copy, 0, count);
         }
 
         #endregion
