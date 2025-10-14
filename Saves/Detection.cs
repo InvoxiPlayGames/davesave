@@ -25,11 +25,10 @@ namespace davesave.Saves
 
             // Rock Band 4
             RB4Xbox,
-            RB4XboxSystemOptions,
             RB4PS4,
             RB4Xbox_Decrypted,
-            RB4XboxSystemOptions_Decrypted,
             RB4PS4_Decrypted,
+            RB4XboxSystemOptions,
         }
 
         public static SaveType DetectSaveType(byte[] readBuffer)
@@ -57,9 +56,9 @@ namespace davesave.Saves
                     else
                         return SaveType.RB4Xbox_Decrypted;
                 }
-                // RBSystemOptions standalone is revision 0x1C
-                else if (revision == 0x1C)
-                    return SaveType.RB4XboxSystemOptions_Decrypted;
+                // RBSystemOptions standalone is revision 0 with an inner stream of 0x1C
+                else if (revision == 0x00 && BitConverter.ToUInt32(readBuffer, 6) == 0x1C)
+                    return SaveType.RB4XboxSystemOptions;
                 // Encrypted RevisionStreams are always revision 0x00
                 else if (revision == 0x00)
                 {
@@ -95,9 +94,6 @@ namespace davesave.Saves
                         else
                             return SaveType.RB4Xbox;
                     }
-                    // RBSystemOptions standalone is revision 0x1C
-                    else if (revision_enc == 0x1C)
-                        return SaveType.RB4XboxSystemOptions;
                     else
                         return SaveType.Unsupported;
                 }

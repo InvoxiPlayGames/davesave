@@ -26,7 +26,6 @@ namespace davesave
             { SaveDetection.SaveType.RB4Xbox, "Rock Band 4 Save Data (Xbox)" },
             { SaveDetection.SaveType.RB4Xbox_Decrypted, "Rock Band 4 Save Data (Xbox, Decrypted)" },
             { SaveDetection.SaveType.RB4XboxSystemOptions, "Rock Band 4 System Options (Xbox)" },
-            { SaveDetection.SaveType.RB4XboxSystemOptions_Decrypted, "Rock Band 4 System Options (Xbox, Decrypted)" },
         };
 
         public static void RB4SystemInfo(RBSystemOptions system)
@@ -103,7 +102,7 @@ namespace davesave
 
             // handle decryption if necessary
             if (type == SaveDetection.SaveType.AmpPS4 || type == SaveDetection.SaveType.RB4Xbox ||
-                type == SaveDetection.SaveType.RB4PS4 || type == SaveDetection.SaveType.RB4XboxSystemOptions)
+                type == SaveDetection.SaveType.RB4PS4)
             {
                 // big endian save file
                 encStr = new EncryptedReadRevisionStream(inFile, false);
@@ -142,10 +141,12 @@ namespace davesave
                 if (encStr != null)
                     encStr.FinishReading();
             }
-            else if (type == SaveDetection.SaveType.RB4XboxSystemOptions || type == SaveDetection.SaveType.RB4XboxSystemOptions_Decrypted)
+            else if (type == SaveDetection.SaveType.RB4XboxSystemOptions)
             {
-                RBSystemOptions options = RBSystemOptions.ReadFromStream(encStr == null ? inFile : encStr);
+                RevisionStream rev = new RevisionStream(encStr == null ? inFile : encStr, 0, 0, false);
+                RBSystemOptions options = RBSystemOptions.ReadFromStream(rev);
                 RB4SystemInfo(options);
+                rev.FinishReading();
                 if (encStr != null)
                     encStr.FinishReading();
             }
