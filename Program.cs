@@ -139,6 +139,17 @@ else if (verb == "encrypt")
     outStream.Close();
     return;
 }
+else if (verb == "convert")
+{
+    if (args.Length < 3)
+    {
+        Console.WriteLine("Error: not enough filenames provided.");
+        PrintUsage(false);
+        return;
+    }
+    await AmpConversion.ConvertAmpSave(args[1], args[2]);
+    return;
+}
 else
 {
     Console.WriteLine("Error: unknown command");
