@@ -17,6 +17,9 @@ static void PrintUsage(bool showInfo = true)
     Console.WriteLine("- davesave info [filename]");
     Console.WriteLine("    will display savegame info from the file provided");
     Console.WriteLine();
+    Console.WriteLine("- davesave convert [input file] [output file]");
+    Console.WriteLine("    Amplitude 2016 ONLY!! will convert between PS4 and PS3 save file formats");
+    Console.WriteLine();
     Console.WriteLine("- davesave decrypt [input file] [output file] (optional: ps3/360/ps4/xb1/pc)");
     Console.WriteLine("    will decrypt the encrypted save from the input file into the output");
     Console.WriteLine("    platform must be provided if working with an unsupported game");
