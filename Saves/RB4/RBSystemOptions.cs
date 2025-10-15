@@ -11,6 +11,20 @@
         public bool mHasCalibrated;
 #pragma warning restore CS8618
 
+        public void WriteToStream(Stream stream)
+        {
+            RevisionStream rev = new RevisionStream(stream, 0x5);
+
+            rev.WriteFloat(mOverscan);
+            rev.WriteFloat(mAudioOffset);
+            rev.WriteFloat(mVideoOffset);
+            rev.WriteFloat(mDialogVolume);
+            rev.WriteFloat(mGammaValue);
+            rev.WriteUInt8(mHasCalibrated ? (byte)0x01 : (byte)0x00);
+
+            rev.FinishWriting();
+        }
+
         public static SystemOptions ReadFromStream(Stream stream)
         {
             SystemOptions opt = new();
@@ -65,6 +79,45 @@
         public uint mUnknown8;
         public RBSongCache mSongCache;
 #pragma warning restore CS8618
+
+        public void WriteToStream(Stream stream)
+        {
+            RevisionStream rev = new RevisionStream(stream, 0x1C);
+
+            mSystemOptions.WriteToStream(rev);
+            rev.WriteInt32LE(mBackgroundVolume);
+            rev.WriteInt32LE(mInstrumentsVolume);
+            rev.WriteInt32LE(mSFXVolume);
+            rev.WriteInt32LE(mCrowdVolume);
+            rev.WriteUInt8(mDolby ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mBassBoost ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mOverscan ? (byte)0x01 : (byte)0x00);
+            rev.WriteInt32LE(mProDrumCymbalLanes);
+            rev.WriteUInt8(mIsDrumNavigationAllowed ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mNoFail ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mIndependentTrackSpeeds ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mImprovSolosScored ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mAwesomenessDetection ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mLeaderboardLadder ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mHide1RatedSongs ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mUseSubtitles ? (byte)0x01 : (byte)0x00);
+            rev.WriteInt32LE(mSongLibSort);
+            rev.WriteInt32LE(mLastPlayedPatchVersion);
+            rev.WriteUInt8(mSeenRivalsUpsell ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mDrumAutoKickEnabled ? (byte)0x01 : (byte)0x00);
+            rev.WriteLengthUTF8(mUnknown1);
+            rev.WriteLengthUTF8(mUnknown2);
+            rev.WriteUInt8(mHideUnavailableSOMPSongs ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt8(mUnknown3 ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt32LE(mUnknown4);
+            rev.WriteUInt32LE(mUnknown5);
+            rev.WriteUInt8(mUnknown6 ? (byte)0x01 : (byte)0x00);
+            rev.WriteUInt32LE(mUnknown7);
+            rev.WriteUInt32LE(mUnknown8);
+            mSongCache.WriteToStream(rev);
+
+            rev.FinishWriting();
+        }
 
         public static RBSystemOptions ReadFromStream(Stream stream)
         {
@@ -123,6 +176,11 @@
         //   the number of refreshes it's been since the song was last seen
         //   and the other is the most recent changelist version.
 
+        public void WriteToStream(Stream stream)
+        {
+            stream.Write(mData, 0, 0x4B8);
+        }
+
         public static RBSongMetadata ReadFromStream(Stream stream)
         {
             RBSongMetadata meta = new();
@@ -143,6 +201,45 @@
         public Dictionary<int, RBSongMetadata> mMetadataMap;
         public int[] mRecentlyAcquiredSongs;
 #pragma warning restore CS8618
+
+        public void WriteToStream(Stream stream)
+        {
+            RevisionStream rev = new RevisionStream(stream, 0x8, false);
+
+            rev.WriteInt32LE(mCacheVersion);
+
+            rev.WriteInt32LE(mSongsInContent.Count);
+            foreach (string content in mSongsInContent.Keys)
+            {
+                rev.WriteLengthUTF8(content);
+                rev.WriteInt32LE(mSongsInContent[content].Length);
+                for (int i = 0; i < mSongsInContent[content].Length; i++)
+                    rev.WriteInt32LE(mSongsInContent[content][i]);
+            }
+
+            rev.WriteInt32LE(mShortNametoSongDir.Count);
+            foreach (string shortname in mShortNametoSongDir.Keys)
+            {
+                rev.WriteLengthUTF8(shortname);
+                rev.WriteLengthUTF8(mShortNametoSongDir[shortname]);
+            }
+
+            rev.WriteInt32LE(0x4B8);
+
+            rev.WriteInt32LE(mMetadataMap.Count);
+            foreach (int songId in mMetadataMap.Keys)
+            {
+                rev.WriteInt32LE(songId);
+                mMetadataMap[songId].WriteToStream(stream);
+            }
+
+            rev.WriteInt32LE(mRecentlyAcquiredSongs.Length);
+            for (int i = 0; i < mRecentlyAcquiredSongs.Length; i++)
+                rev.WriteInt32LE(mRecentlyAcquiredSongs[i]);
+
+            rev.FinishWriting();
+            return;
+        }
 
         public static RBSongCache ReadFromStream(Stream stream)
         {

@@ -12,6 +12,20 @@
         public byte mProgress; // always 100
 #pragma warning restore CS8618
 
+        public void WriteToStream(Stream stream, bool isBE = false)
+        {
+            stream.WriteLengthUTF8(mSongName, isBE);
+            if (isBE)
+                stream.WriteUInt16BE(mScore);
+            else
+                stream.WriteUInt16LE(mScore);
+            stream.WriteUInt8(mDifficulty);
+            stream.WriteUInt8(mHighestStreak);
+            stream.WriteUInt8(mPercentCleared);
+            stream.WriteUInt8(mScoreType);
+            stream.WriteUInt8(mProgress);
+        }
+
         public static AmpSongPersistentData ReadFromStream(Stream stream, bool isBE = false)
         {
             AmpSongPersistentData song = new();

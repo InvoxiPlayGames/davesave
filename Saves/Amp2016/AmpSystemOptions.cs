@@ -9,6 +9,29 @@
         public int[] mFlags2; // always 2 entries
 #pragma warning restore CS8618
 
+        public void WriteToStream(Stream stream, bool isBE = false)
+        {
+            stream.WriteLengthUTF8(mControlScheme, isBE);
+            if (isBE)
+            {
+                stream.WriteUInt32BE((uint)mFlags1.Length);
+                for (int i = 0; i < mFlags1.Length; i++)
+                    stream.WriteUInt32BE((uint)mFlags1[i]);
+                stream.WriteUInt32BE((uint)mFlags2.Length);
+                for (int i = 0; i < mFlags2.Length; i++)
+                    stream.WriteUInt32BE((uint)mFlags2[i]);
+            }
+            else
+            {
+                stream.WriteInt32LE(mFlags1.Length);
+                for (int i = 0; i < mFlags1.Length; i++)
+                    stream.WriteInt32LE(mFlags1[i]);
+                stream.WriteInt32LE(mFlags2.Length);
+                for (int i = 0; i < mFlags2.Length; i++)
+                    stream.WriteInt32LE(mFlags2[i]);
+            }
+        }
+
         public static AmpSystemOptionsPersistentData ReadFromStream(Stream stream, bool isBE = false)
         {
             AmpSystemOptionsPersistentData options = new();

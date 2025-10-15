@@ -8,6 +8,16 @@
         public int mUnknown3;
 #pragma warning restore CS8618
 
+        public void WriteToStream(Stream stream, bool isBE = false)
+        {
+            stream.WriteUInt8(mUnknown1);
+            stream.WriteUInt8(mUnknown2);
+            if (isBE)
+                stream.WriteUInt32BE((uint)mUnknown3);
+            else
+                stream.WriteInt32LE(mUnknown3);
+        }
+
         public static AmpProfileFooter ReadFromStream(Stream stream, bool isBE = false)
         {
             AmpProfileFooter footer = new();
@@ -35,6 +45,44 @@
         public AmpCampaignPersistentData mCampaignData;
         public AmpProfileFooter mFooter;
 #pragma warning restore CS8618
+
+        public void WriteToStream(Stream stream, bool isPS3 = false)
+        {
+            RevisionStream rev = new RevisionStream(stream, 0x1, isPS3);
+
+            rev.WriteUInt8(mVersion);
+            rev.WriteLengthUTF8(mUnused, isPS3);
+            if (isPS3)
+                rev.WriteUInt32BE((uint)mSongData.Length);
+            else
+                rev.WriteInt32LE(mSongData.Length);
+            for (int i = 0; i < mSongData.Length; i++)
+                mSongData[i].WriteToStream(rev, isPS3);
+
+            mOptions.WriteToStream(rev, isPS3);
+            rev.WriteUInt8(mUnknown);
+
+            if (isPS3)
+                rev.WriteUInt32BE((uint)mUnlocks.Length);
+            else
+                rev.WriteInt32LE(mUnlocks.Length);
+            for (int i = 0; i < mUnlocks.Length; i++)
+                rev.WriteLengthUTF8(mUnlocks[i], isPS3);
+
+            mCampaignData.WriteToStream(rev, isPS3);
+            mFooter.WriteToStream(rev, isPS3);
+
+            // PS3 pads the save file
+            if (isPS3)
+            {
+                // TODO: is this correct?
+                long numPadding = 0x7FFE - (rev.Position) - 5 - 4;
+                byte[] bytesToWrite = new byte[numPadding];
+                rev.Write(bytesToWrite, 0, (int)numPadding);
+            }
+
+            rev.FinishWriting();
+        }
 
         public static AmpProfile ReadFromStream(Stream stream, bool isPS3 = false)
         {

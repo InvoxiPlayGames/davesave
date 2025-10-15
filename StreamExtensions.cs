@@ -58,6 +58,14 @@ static class StreamExtensions
         s.Write(tmp, 0, 2);
     }
 
+    public static void WriteUInt16BE(this Stream s, ushort i)
+    {
+        byte[] tmp = new byte[2];
+        tmp[0] = (byte)((i >> 8) & 0xFF); 
+        tmp[1] = (byte)(i & 0xFF);
+        s.Write(tmp, 0, 2);
+    }
+
     /// <summary>
     /// Read an unsigned 16-bit Big-endian integer from the stream.
     /// </summary>

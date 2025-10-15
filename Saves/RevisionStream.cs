@@ -7,6 +7,7 @@
         private int _curVersion;
         private bool _bigEndian;
 
+        // Reading constructor
         public RevisionStream(Stream original, int minVersion, int curVersion, bool bigEndian = false)
         {
             byte magic = original.ReadUInt8();
@@ -31,6 +32,22 @@
             _bigEndian = bigEndian;
         }
 
+        // Writing constructor
+        public RevisionStream(Stream original, int curVersion, bool bigEndian = false)
+        {
+            original.WriteUInt8(0x7A);
+
+            if (bigEndian)
+                original.WriteUInt32BE((uint)curVersion);
+            else
+                original.WriteInt32LE(curVersion);
+
+            Version = curVersion;
+            _stream = original;
+            _curVersion = curVersion;
+            _bigEndian = bigEndian;
+        }
+
         public override bool CanRead => _stream.CanRead;
 
         public override bool CanSeek => _stream.CanSeek;
@@ -46,6 +63,11 @@
             byte magic = _stream.ReadUInt8();
             if (magic != 0x7B)
                 throw new Exception($"Unexpected {magic:X2} at end of RevisionStream!");
+        }
+
+        public void FinishWriting()
+        {
+            _stream.WriteUInt8(0x7B);
         }
 
         public override void Flush()
