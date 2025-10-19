@@ -151,36 +151,4 @@
             return ts;
         }
     }
-
-    public class RBClanPersistentData
-    {
-#pragma warning disable CS8618
-        // TODO: figure out what this actually is
-        // !! there is a chance that this could be a non-fixed size !!
-        public uint[] mUnknown1;
-        public int mTier;
-        public int mHighestTier;
-        public uint[] mUnknown2;
-#pragma warning restore CS8618
-
-        public static RBClanPersistentData ReadFromStream(Stream stream)
-        {
-            RBClanPersistentData clan = new();
-            RevisionStream rev = new RevisionStream(stream, 0x6, 0x6);
-
-            clan.mUnknown1 = new uint[3];
-            for (int i = 0; i < clan.mUnknown1.Length; i++)
-                clan.mUnknown1[i] = rev.ReadUInt32LE();
-
-            clan.mTier = rev.ReadInt32LE();
-            clan.mHighestTier = rev.ReadInt32LE();
-
-            clan.mUnknown2 = new uint[7];
-            for (int i = 0; i < clan.mUnknown2.Length; i++)
-                clan.mUnknown2[i] = rev.ReadUInt32LE();
-
-            rev.FinishReading();
-            return clan;
-        }
-    }
 }
