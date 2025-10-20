@@ -95,7 +95,7 @@
         public Dictionary<string, int> mTourFansEarned;
         public Dictionary<string, int> mTourCashEarned;
         public string mCityForNextTourChoice;
-        // public SongPersistentData[]? mDeprecatedSongData;
+        public Dictionary<int, RBSongPersistentData> mDeprecatedSongData;
         public int[] mSongsPlayed;
         public HxGuid mBandGuid;
         public string[] mPatchesToRun;
@@ -163,9 +163,13 @@
 
             band.mCityForNextTourChoice = rev.ReadLengthUTF8();
 
-            // mDeprecatedSongData
-            // TODO: Implement this for saves brought forward from pre-Rivals.
             int len_mDeprecatedSongData = rev.ReadInt32LE();
+            band.mDeprecatedSongData = new Dictionary<int, RBSongPersistentData>(len_mDeprecatedSongData);
+            for (int i = 0; i < len_mDeprecatedSongData; i++)
+            {
+                int songID = rev.ReadInt32LE();
+                band.mDeprecatedSongData[songID] = RBSongPersistentData.ReadFromStream(rev);
+            }
 
             int len_mSongsPlayed = rev.ReadInt32LE();
             band.mSongsPlayed = new int[len_mSongsPlayed];
